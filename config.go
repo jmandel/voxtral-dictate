@@ -14,6 +14,7 @@ type Config struct {
 	Typing    TypingConfig      `toml:"typing"`
 	Backend   BackendConfig     `toml:"backend"`
 	Indicator []IndicatorConfig `toml:"indicator"`
+	Debug     bool              `toml:"debug"`
 }
 
 type IndicatorConfig struct {
@@ -59,6 +60,8 @@ type BackendConfig struct {
 	MistralBatch MistralBatchConfig `toml:"mistral-batch"`
 	VllmRT       VllmRTConfig       `toml:"vllm-realtime"`
 	LlamaCpp     LlamaCppConfig     `toml:"llamacpp"`
+	XaiRT        XaiRTConfig        `toml:"xai-realtime"`
+	XaiBatch     XaiBatchConfig     `toml:"xai-batch"`
 }
 
 type MistralConfig struct {
@@ -71,9 +74,11 @@ type MistralRTConfig struct {
 }
 
 type MistralBatchConfig struct {
-	APIKey       string `toml:"api_key"`
-	Model        string `toml:"model"`
-	ChunkSeconds int    `toml:"chunk_seconds"`
+	APIKey         string  `toml:"api_key"`
+	Model          string  `toml:"model"`
+	ChunkSeconds   int     `toml:"chunk_seconds"`
+	SilenceSeconds float64 `toml:"silence_seconds"`
+	SilenceRMS     float64 `toml:"silence_rms"`
 }
 
 type VllmRTConfig struct {
@@ -84,6 +89,19 @@ type VllmRTConfig struct {
 type LlamaCppConfig struct {
 	URL          string `toml:"url"`
 	ChunkSeconds int    `toml:"chunk_seconds"`
+}
+
+type XaiRTConfig struct {
+	APIKey        string `toml:"api_key"`
+	URL           string `toml:"url"`
+	EndpointingMs int    `toml:"endpointing_ms"`
+	Language      string `toml:"language"`
+}
+
+type XaiBatchConfig struct {
+	APIKey   string `toml:"api_key"`
+	URL      string `toml:"url"`
+	Language string `toml:"language"`
 }
 
 func defaultConfig() *Config {
@@ -106,8 +124,9 @@ func defaultConfig() *Config {
 				Model: "voxtral-mini-transcribe-realtime-2602",
 			},
 			MistralBatch: MistralBatchConfig{
-				Model:        "voxtral-mini-latest",
-				ChunkSeconds: 5,
+				Model:          "voxtral-mini-latest",
+				ChunkSeconds:   5,
+				SilenceSeconds: 2.0,
 			},
 			VllmRT: VllmRTConfig{
 				URL:   "ws://localhost:8000/v1/realtime",
@@ -116,6 +135,13 @@ func defaultConfig() *Config {
 			LlamaCpp: LlamaCppConfig{
 				URL:          "http://localhost:8080/v1/chat/completions",
 				ChunkSeconds: 3,
+			},
+			XaiRT: XaiRTConfig{
+				URL:           "wss://api.x.ai/v1/stt",
+				EndpointingMs: 1000,
+			},
+			XaiBatch: XaiBatchConfig{
+				URL: "https://api.x.ai/v1/stt",
 			},
 		},
 	}

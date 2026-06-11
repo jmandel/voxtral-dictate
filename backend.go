@@ -26,15 +26,32 @@ func NewBackend(cfg *Config) (Backend, error) {
 			cfg.Audio.SampleRate,
 		), nil
 	case "mistral-batch":
-		apiKey, err := getMistralAPIKey(cfg.Backend.MistralBatch.APIKey)
+		mb := cfg.Backend.MistralBatch
+		apiKey, err := getMistralAPIKey(mb.APIKey)
 		if err != nil {
 			return nil, err
 		}
+		model := mb.Model
+		if model == "" {
+			model = "voxtral-mini-latest"
+		}
+		chunkSeconds := mb.ChunkSeconds
+		if chunkSeconds <= 0 {
+			chunkSeconds = 5
+		}
+		silenceRMS := mb.SilenceRMS
+		if silenceRMS <= 0 {
+			silenceRMS = cfg.Audio.VAD.Threshold
+		}
 		return NewMistralBatchBackend(
 			apiKey,
-			cfg.Backend.MistralBatch.Model,
+			model,
 			cfg.Audio.SampleRate,
-			cfg.Backend.MistralBatch.ChunkSeconds,
+			cfg.Audio.ChunkMs,
+			chunkSeconds,
+			mb.SilenceSeconds,
+			silenceRMS,
+			cfg.Debug,
 		), nil
 	case "vllm-realtime":
 		return NewWebSocketBackend(
@@ -48,6 +65,22 @@ func NewBackend(cfg *Config) (Backend, error) {
 			cfg.Backend.LlamaCpp.URL,
 			cfg.Audio.SampleRate,
 			cfg.Backend.LlamaCpp.ChunkSeconds,
+		), nil
+	case "xai-realtime":
+		return NewXaiRealtimeBackend(
+			cfg.Backend.XaiRT.URL,
+			mustGetXaiAPIKey(cfg),
+			cfg.Audio.SampleRate,
+			cfg.Backend.XaiRT.EndpointingMs,
+			cfg.Backend.XaiRT.Language,
+			cfg.Debug,
+		), nil
+	case "xai-batch":
+		return NewXaiBatchBackend(
+			mustGetXaiAPIKey(cfg),
+			cfg.Backend.XaiBatch.URL,
+			cfg.Audio.SampleRate,
+			cfg.Backend.XaiBatch.Language,
 		), nil
 	case "mock":
 		return NewMockBackend(cfg.Audio.SampleRate), nil

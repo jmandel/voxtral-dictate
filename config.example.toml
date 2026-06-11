@@ -1,5 +1,8 @@
 # voxtral-dictate config — copy to ~/.config/dictate/config.toml
 
+# Enable extra backend logging where supported.
+debug = false
+
 [daemon]
 socket = "/tmp/dictate.sock"
 
@@ -36,8 +39,10 @@ model = "voxtral-mini-transcribe-realtime-2602"
 
 [backend.mistral-batch]
 model = "voxtral-mini-latest"
-chunk_seconds = 5
-# api_key = ""       # optional override
+chunk_seconds = 5        # max accumulation before flushing
+silence_seconds = 2.0    # flush early after this much trailing silence (0 disables)
+silence_rms = 0          # RMS threshold for "silent" chunk; 0 = use [audio.vad] threshold
+# api_key = ""           # optional override
 
 [backend.vllm-realtime]
 url = "ws://localhost:8000/v1/realtime"

@@ -47,7 +47,11 @@ func (b *WebSocketBackend) Transcribe(ctx context.Context, audioCh <-chan []byte
 		return fmt.Errorf("ws dial %s: %w", b.url, err)
 	}
 	defer func() {
-		conn.CloseNow()
+		// Send a proper WS close frame so the server retires the gRPC
+		// stream promptly. CloseNow does a forceful TCP close which can
+		// leave the server-side stream in a "may still be alive" state and
+		// inflate the apparent concurrent-stream count for our key.
+		_ = conn.Close(websocket.StatusNormalClosure, "")
 		log.Printf("WebSocket disconnected from %s", b.url)
 	}()
 
