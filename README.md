@@ -91,6 +91,7 @@ See `config.example.toml` for the full annotated config. Key sections:
 ```toml
 sample_rate = 16000   # Must be 16000 for Voxtral
 chunk_ms = 480        # Audio chunk size (480ms recommended for Realtime)
+method = "auto"       # auto | pw-record | arecord
 device = ""           # ALSA/PipeWire device name; empty = system default mic
 ```
 
@@ -157,6 +158,9 @@ method = "xdotool"    # How to inject text into the focused window
 ### `[backend]`
 ```toml
 name = "llamacpp"     # Which STT backend to use
+
+[backend.mistral]
+api_key = ""          # Shared by mistral-realtime and mistral-batch; or set MISTRAL_API_KEY
 ```
 
 | Backend | Latency | Needs | Cost |
@@ -249,7 +253,7 @@ vllm serve mistralai/Voxtral-Small-24B-2507 \
 Just set your API key:
 ```bash
 export MISTRAL_API_KEY="your-key-here"
-# or set api_key in config.toml under [backend.mistral-realtime]
+# or set api_key in config.toml under [backend.mistral]
 ```
 
 Set `backend.name = "mistral-realtime"` for streaming or `"mistral-batch"` for chunked.

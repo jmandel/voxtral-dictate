@@ -15,18 +15,26 @@ type Backend interface {
 func NewBackend(cfg *Config) (Backend, error) {
 	switch cfg.Backend.Name {
 	case "mistral-realtime":
+		apiKey, err := getMistralAPIKey(cfg.Backend.MistralRT.APIKey)
+		if err != nil {
+			return nil, err
+		}
 		return NewWebSocketBackend(
 			"wss://api.mistral.ai/v1/audio/transcriptions/realtime?model="+cfg.Backend.MistralRT.Model,
 			cfg.Backend.MistralRT.Model,
-			mustGetMistralAPIKey(cfg),
+			apiKey,
 			cfg.Audio.SampleRate,
 		), nil
 	case "mistral-batch":
+		apiKey, err := getMistralAPIKey(cfg.Backend.MistralBatch.APIKey)
+		if err != nil {
+			return nil, err
+		}
 		return NewMistralBatchBackend(
-			mustGetMistralAPIKey(cfg),
-			"voxtral-mini-latest",
+			apiKey,
+			cfg.Backend.MistralBatch.Model,
 			cfg.Audio.SampleRate,
-			5, // 5 second chunks
+			cfg.Backend.MistralBatch.ChunkSeconds,
 		), nil
 	case "vllm-realtime":
 		return NewWebSocketBackend(

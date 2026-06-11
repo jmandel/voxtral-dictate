@@ -9,7 +9,6 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
-	"os"
 )
 
 // MistralBatchBackend sends accumulated audio to Mistral's
@@ -117,14 +116,9 @@ func (b *MistralBatchBackend) sendChunk(ctx context.Context, pcm []byte, textCh 
 	}
 }
 
-func mustGetMistralAPIKey(cfg *Config) string {
-	key := cfg.Backend.MistralRT.APIKey
+func getMistralAPIKey(key string) (string, error) {
 	if key == "" {
-		key = os.Getenv("MISTRAL_API_KEY")
+		return "", fmt.Errorf("set MISTRAL_API_KEY or api_key in config")
 	}
-	if key == "" {
-		fmt.Fprintf(os.Stderr, "Set MISTRAL_API_KEY or api_key in config\n")
-		os.Exit(1)
-	}
-	return key
+	return key, nil
 }

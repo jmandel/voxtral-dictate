@@ -17,16 +17,16 @@ type Config struct {
 }
 
 type IndicatorConfig struct {
-	Type      string `toml:"type"`       // "led", "dunstify", "command"
+	Type string `toml:"type"` // "led", "dunstify", "command"
 	// LED options
 	LEDNumber int    `toml:"led_number"` // /proc/acpi/ibm/led number (0=power)
 	Mode      string `toml:"mode"`       // "on" or "blink"
 	// Dunstify options
-	Message   string `toml:"message"`
-	Urgency   string `toml:"urgency"`    // low | normal | critical
+	Message string `toml:"message"`
+	Urgency string `toml:"urgency"` // low | normal | critical
 	// Command options
-	StartCmd  string `toml:"start_cmd"`
-	StopCmd   string `toml:"stop_cmd"`
+	StartCmd string `toml:"start_cmd"`
+	StopCmd  string `toml:"stop_cmd"`
 }
 
 type DaemonConfig struct {
@@ -37,6 +37,7 @@ type AudioConfig struct {
 	SampleRate int       `toml:"sample_rate"`
 	ChunkMs    int       `toml:"chunk_ms"`
 	Device     string    `toml:"device"`
+	Method     string    `toml:"method"`
 	VAD        VADConfig `toml:"vad"`
 }
 
@@ -52,15 +53,27 @@ type TypingConfig struct {
 }
 
 type BackendConfig struct {
-	Name           string              `toml:"name"`
-	MistralRT      MistralRTConfig     `toml:"mistral-realtime"`
-	VllmRT         VllmRTConfig        `toml:"vllm-realtime"`
-	LlamaCpp       LlamaCppConfig      `toml:"llamacpp"`
+	Name         string             `toml:"name"`
+	Mistral      MistralConfig      `toml:"mistral"`
+	MistralRT    MistralRTConfig    `toml:"mistral-realtime"`
+	MistralBatch MistralBatchConfig `toml:"mistral-batch"`
+	VllmRT       VllmRTConfig       `toml:"vllm-realtime"`
+	LlamaCpp     LlamaCppConfig     `toml:"llamacpp"`
+}
+
+type MistralConfig struct {
+	APIKey string `toml:"api_key"`
 }
 
 type MistralRTConfig struct {
 	APIKey string `toml:"api_key"`
 	Model  string `toml:"model"`
+}
+
+type MistralBatchConfig struct {
+	APIKey       string `toml:"api_key"`
+	Model        string `toml:"model"`
+	ChunkSeconds int    `toml:"chunk_seconds"`
 }
 
 type VllmRTConfig struct {
@@ -92,6 +105,10 @@ func defaultConfig() *Config {
 			MistralRT: MistralRTConfig{
 				Model: "voxtral-mini-transcribe-realtime-2602",
 			},
+			MistralBatch: MistralBatchConfig{
+				Model:        "voxtral-mini-latest",
+				ChunkSeconds: 5,
+			},
 			VllmRT: VllmRTConfig{
 				URL:   "ws://localhost:8000/v1/realtime",
 				Model: "mistralai/Voxtral-Mini-4B-Realtime-2602",
@@ -121,9 +138,16 @@ func mustLoadConfig() *Config {
 		}
 	}
 
-	// Env override for API key
+	// A MISTRAL_API_KEY env var or [backend.mistral] api_key fills per-backend blanks.
+	envKey := os.Getenv("MISTRAL_API_KEY")
+	if envKey != "" {
+		cfg.Backend.Mistral.APIKey = envKey
+	}
 	if cfg.Backend.MistralRT.APIKey == "" {
-		cfg.Backend.MistralRT.APIKey = os.Getenv("MISTRAL_API_KEY")
+		cfg.Backend.MistralRT.APIKey = cfg.Backend.Mistral.APIKey
+	}
+	if cfg.Backend.MistralBatch.APIKey == "" {
+		cfg.Backend.MistralBatch.APIKey = cfg.Backend.Mistral.APIKey
 	}
 
 	return cfg

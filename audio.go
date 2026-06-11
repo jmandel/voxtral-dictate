@@ -14,6 +14,7 @@ type Recorder struct {
 	sampleRate int
 	chunkBytes int // bytes per chunk to read
 	device     string
+	method     string
 	cmd        *exec.Cmd
 	stdout     io.ReadCloser
 }
@@ -25,6 +26,7 @@ func NewRecorder(cfg AudioConfig) *Recorder {
 		sampleRate: cfg.SampleRate,
 		chunkBytes: chunkSamples * 2,
 		device:     cfg.Device,
+		method:     cfg.Method,
 	}
 }
 
@@ -75,22 +77,40 @@ func (r *Recorder) Start(ctx context.Context) (<-chan []byte, error) {
 }
 
 func (r *Recorder) buildArgs() []string {
-	// Prefer pw-record (PipeWire), fall back to arecord (ALSA)
-	if _, err := exec.LookPath("pw-record"); err == nil {
-		args := []string{
-			"pw-record",
-			"--format=s16",
-			fmt.Sprintf("--rate=%d", r.sampleRate),
-			"--channels=1",
-			"-", // stdout
+	switch r.method {
+	case "", "auto":
+		if _, err := exec.LookPath("pw-record"); err == nil {
+			return r.pwRecordArgs()
 		}
-		if r.device != "" {
-			args = append([]string{args[0], "--target=" + r.device}, args[1:]...)
+		return r.arecordArgs()
+	case "pw-record":
+		return r.pwRecordArgs()
+	case "arecord":
+		return r.arecordArgs()
+	default:
+		log.Printf("unknown audio method %q, using auto", r.method)
+		if _, err := exec.LookPath("pw-record"); err == nil {
+			return r.pwRecordArgs()
 		}
-		return args
+		return r.arecordArgs()
 	}
+}
 
-	// arecord fallback
+func (r *Recorder) pwRecordArgs() []string {
+	args := []string{
+		"pw-record",
+		"--format=s16",
+		fmt.Sprintf("--rate=%d", r.sampleRate),
+		"--channels=1",
+		"-", // stdout
+	}
+	if r.device != "" {
+		args = append([]string{args[0], "--target=" + r.device}, args[1:]...)
+	}
+	return args
+}
+
+func (r *Recorder) arecordArgs() []string {
 	args := []string{
 		"arecord",
 		"-f", "S16_LE",

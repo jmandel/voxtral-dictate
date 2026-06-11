@@ -6,6 +6,7 @@ socket = "/tmp/dictate.sock"
 [audio]
 sample_rate = 16000
 chunk_ms = 480        # 480ms chunks (recommended for Voxtral Realtime)
+method = "auto"       # auto | pw-record | arecord
 device = ""           # ALSA/PipeWire device; empty = default
 
 # Voice Activity Detection — skip sending silent audio to save API costs
@@ -26,14 +27,17 @@ method = "xdotool"   # xdotool | ydotool | wtype | dotool
 [backend]
 name = "llamacpp"
 
+[backend.mistral]
+api_key = ""         # shared by mistral-realtime and mistral-batch; or set MISTRAL_API_KEY
+
 [backend.mistral-realtime]
-api_key = ""         # or set MISTRAL_API_KEY env var
 model = "voxtral-mini-transcribe-realtime-2602"
+# api_key = ""       # optional override
 
 [backend.mistral-batch]
-api_key = ""
 model = "voxtral-mini-latest"
 chunk_seconds = 5
+# api_key = ""       # optional override
 
 [backend.vllm-realtime]
 url = "ws://localhost:8000/v1/realtime"
