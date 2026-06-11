@@ -20,12 +20,12 @@ trail_chunks = 21     # chunks to keep after speech stops (~10s at 480ms)
 method = "xdotool"   # xdotool | ydotool | wtype | dotool
 
 # Choose one backend by name:
-#   mistral-realtime  — Mistral cloud WebSocket streaming (best quality, needs internet)
-#   mistral-batch     — Mistral cloud HTTP chunked (simpler, higher latency)
+#   mistral-realtime  — preferred for interactive dictation; cloud WebSocket streaming
+#   mistral-batch     — cheaper HTTP chunks, but text appears only after each chunk
 #   vllm-realtime     — Local vLLM streaming (needs >=16GB VRAM GPU)
 #   llamacpp          — Local llama.cpp (runs on CPU, any GGUF quant)
 [backend]
-name = "llamacpp"
+name = "mistral-realtime"
 
 [backend.mistral]
 api_key = ""         # shared by mistral-realtime and mistral-batch; or set MISTRAL_API_KEY

@@ -157,11 +157,18 @@ method = "xdotool"    # How to inject text into the focused window
 
 ### `[backend]`
 ```toml
-name = "llamacpp"     # Which STT backend to use
+name = "mistral-realtime"  # Preferred for interactive dictation
 
 [backend.mistral]
 api_key = ""          # Shared by mistral-realtime and mistral-batch; or set MISTRAL_API_KEY
 ```
+
+For interactive dictation, prefer `mistral-realtime` or `vllm-realtime`. They
+stream text while you speak, so the UI feels immediate. `mistral-batch` is useful
+when you want lower API cost or simpler HTTP behavior, but it accumulates audio
+for `chunk_seconds` before each request and therefore has visible lag. With VAD
+enabled, the final words also wait for the trailing-silence window unless you
+stop the session manually.
 
 | Backend | Latency | Needs | Cost |
 |---|---|---|---|
@@ -250,13 +257,14 @@ vllm serve mistralai/Voxtral-Small-24B-2507 \
 
 ### Option E: Mistral Cloud API (no local GPU needed)
 
-Just set your API key:
+This is the easiest setup. Use `mistral-realtime` for normal dictation:
 ```bash
 export MISTRAL_API_KEY="your-key-here"
 # or set api_key in config.toml under [backend.mistral]
 ```
 
-Set `backend.name = "mistral-realtime"` for streaming or `"mistral-batch"` for chunked.
+Set `backend.name = "mistral-realtime"` for the preferred low-latency streaming
+path. Use `"mistral-batch"` only when cost is more important than responsiveness.
 
 ## i3 Integration
 
